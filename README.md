@@ -1,16 +1,38 @@
 # todo_list_flutter_etiqa
 
-A new Flutter project.
+A flutter mobile application
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project used an approach of MVVM architecture with a Provider. Under todo_list folder got those 3 files(models,views,view_models);
 
-A few resources to get you started if this is your first Flutter project:
+#models
+-the class of the todo list object defined
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+#views
+-homescreen: display the list of todos
+-add_todo_list: to add new todo item in the list
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+#view_models
+-setup provider
+-defined a variable of todo list
+-defined functions of setter and getter
+
+(SCENARIO)
+1. User may add todo list item by clicking floating action button
+2. User is required to insert todo list title (validation is available)
+3. User choose the start and end date (default is the current date and time)
+4. Upon successful, it will update the todo list in homescreen
+5. User is able to check if the todo item has been completed and the status will change to "Complete"
+6. User is able to edit the todo item by clicking the item, and click "Edit" if done
+7. All changes will be updated
+
+**no unit testing is implemented, still in a learning process
+
+Regards,thank you.
+
+
+
+
+
+
