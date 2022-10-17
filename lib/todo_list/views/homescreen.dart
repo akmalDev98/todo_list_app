@@ -30,6 +30,7 @@ class HomeScreen extends StatelessWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          todoViewModels.resetData();
           Navigator.push(context,
               MaterialPageRoute(builder: (_) {
                 return AddTodoList();

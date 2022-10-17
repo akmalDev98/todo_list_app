@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_list_flutter_etiqa/components/todo_list_row_checkbox.dart';
 import 'package:todo_list_flutter_etiqa/components/todo_list_row_date.dart';
@@ -21,10 +22,8 @@ class TodoListRow extends StatelessWidget {
 
     return InkWell(
       onTap: (){
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) {
-              return AddTodoList(todoListModel: todoListModel,index: index,);
-            }));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => AddTodoList(todoListModel: todoListModel,index: index,)));
       },
       child: Align(
         alignment: Alignment(0,-0.8),
