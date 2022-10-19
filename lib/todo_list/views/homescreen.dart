@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:todo_list_flutter_etiqa/display_retrofit/views/retrofit_screen.dart';
 import 'package:todo_list_flutter_etiqa/todo_list/view_models/todo_view_models.dart';
 import 'package:todo_list_flutter_etiqa/utils/constant.dart';
 
 import '../../components/todo_list_row.dart';
 import 'add_todo_list.dart';
 
-class HomeScreen extends StatelessWidget {
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context,WidgetRef ref) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    TodoViewModels todoViewModels = context.watch<TodoViewModels>();
+    final todoViewModels = ref.watch(todoViewModelsProvider).todoListModel;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -26,10 +28,26 @@ class HomeScreen extends StatelessWidget {
         ),
         backgroundColor: primaryColor,
         centerTitle: false,
+        actions: [
+          GestureDetector(
+              onTap: (){
+                  Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => RetrofitScreen(),
+                ),
+    );},
+              child: Row(
+                children: [
+                  Text("Retrofit Screen",style: TextStyle(fontSize: 18),),
+                  Icon(Icons.arrow_circle_right_outlined,size: 45,),
+                ],
+              )),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          ref.read(todoViewModelsProvider).resetData();
           Navigator.push(context,
               MaterialPageRoute(builder: (_) {
                 return AddTodoList();
@@ -41,7 +59,7 @@ class HomeScreen extends StatelessWidget {
         ),
 
       ),
-      body: todoViewModels.todoListModel.isEmpty ? Padding(
+      body: todoViewModels.isEmpty ? Padding(
         padding: EdgeInsets.only(top: 30),
         child: Align(
           alignment: Alignment(0,-0.8),
@@ -55,10 +73,10 @@ class HomeScreen extends StatelessWidget {
         scrollDirection: Axis.vertical,
         physics: ScrollPhysics(),
         shrinkWrap: true,
-        itemCount: todoViewModels.todoListModel.length,
+        itemCount: todoViewModels.length,
         itemBuilder: (BuildContext context, int index) {
-          final todoItem = todoViewModels.todoListModel[index];
-          return TodoListRow(todoListModel: todoItem,index: index,);
+          final todoItem = todoViewModels[index];
+         return TodoListRow(todoListModel: todoItem,index: index,);
         },
       ),
     );

@@ -1,48 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_list_flutter_etiqa/components/add_todo_list_label.dart';
 import 'package:todo_list_flutter_etiqa/todo_list/models/todo_list_models.dart';
 import 'package:intl/intl.dart';
 import '../../utils/constant.dart';
 import '../view_models/todo_view_models.dart';
 
-class AddTodoList extends StatefulWidget {
+//final todoViewModelsProvider = ChangeNotifierProvider<TodoViewModels>((_) => TodoViewModels());
+final todoViewModelsProvider = ChangeNotifierProvider<TodoViewModels>((ref) {
+  return TodoViewModels();
+});
+
+class AddTodoList extends ConsumerWidget {
   TodoListModel? todoListModel;
   int? index;
 
   AddTodoList({this.todoListModel,this.index});
 
-  @override
-  State<AddTodoList> createState() => _AddTodoListState();
-}
-
-class _AddTodoListState extends State<AddTodoList> {
-
-  TextEditingController _todoTitle = TextEditingController();
-  DateTime _startDateTime = DateTime.now();
-  DateTime _endDateTime = DateTime.now();
   bool _todoTitleValidator = false;
-  TodoListModel? todoListModel;
-  int? index;
+  // TodoListModel? getTodoListModel;
+  // int? getIndex;
 
   //FUNCTIONS
-  Future<DateTime?>  pickDate() => showDatePicker(
-      context: context,
-      initialDate: _startDateTime,
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2100),
-  );
-
-  Future<TimeOfDay?>  pickTime() => showTimePicker(
+  Future<DateTime?>  pickDate(TodoViewModels todoViewModels,int dateTimeIndicator,BuildContext context) => showDatePicker(
     context: context,
-    initialTime: TimeOfDay(hour: _startDateTime.hour, minute: _startDateTime.minute),
+    initialDate: dateTimeIndicator == 0 ? todoViewModels.startDateTime : todoViewModels.endDateTime,
+    firstDate: DateTime(1900),
+    lastDate: DateTime(2100),
   );
 
-  Future pickDateTime(int dateTimeIndicator) async {
-    DateTime? date = await pickDate();
+  Future<TimeOfDay?>  pickTime(TodoViewModels todoViewModels,int dateTimeIndicator,BuildContext context) => showTimePicker(
+      context: context,
+      initialTime: dateTimeIndicator == 0 ? TimeOfDay(hour: todoViewModels.startDateTime.hour, minute: todoViewModels.startDateTime.minute) : TimeOfDay(hour: todoViewModels.endDateTime.hour, minute: todoViewModels.endDateTime.minute)
+  );
+
+  Future pickDateTime(int dateTimeIndicator,TodoViewModels todoViewModels,BuildContext context,WidgetRef ref) async {
+    DateTime? date = await pickDate(todoViewModels,dateTimeIndicator,context);
     if(date == null) return; //pressed CANCEL;
 
-    TimeOfDay? time = await pickTime();
+    TimeOfDay? time = await pickTime(todoViewModels,dateTimeIndicator,context);
     if(time == null) return; //pressed CANCEL;
 
     final newDateTime = DateTime(
@@ -52,7 +48,8 @@ class _AddTodoListState extends State<AddTodoList> {
       time.hour,
       time.minute,
     );
-    dateTimeIndicator == 0 ? setState(() => _startDateTime = newDateTime) : setState(() => _endDateTime = newDateTime);
+    //todoViewModels.setNewDateTime(newDateTime,dateTimeIndicator);
+    ref.read(todoViewModelsProvider).setNewDateTime(newDateTime,dateTimeIndicator);
   }
 
   String daysBetween(DateTime from, DateTime to) {
@@ -64,37 +61,25 @@ class _AddTodoListState extends State<AddTodoList> {
   }
 
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    todoListModel = widget.todoListModel;
-    index = widget.index;
-    if(todoListModel != null){
-      _todoTitle.text = todoListModel!.title;
-      _startDateTime = todoListModel!.startDate!;
-      _endDateTime = todoListModel!.endDate!;
-    }
-  }
-
-
-
-  @override
-  Widget build(BuildContext context) {
-
+  Widget build(BuildContext context,WidgetRef ref) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    TodoViewModels todoViewModels = context.watch<TodoViewModels>();
-    final hoursStart = _startDateTime.hour.toString().padLeft(2,'0');
-    final minutesStart  = _startDateTime.minute.toString().padLeft(2,'0');
-    final hoursEnd = _startDateTime.hour.toString().padLeft(2,'0');
-    final minutesEnd  = _startDateTime.minute.toString().padLeft(2,'0');
+    final todoViewModels = ref.watch(todoViewModelsProvider);
+    if(todoListModel != null){
+      // todoViewModels.setCurrentTodoModel(todoListModel!);
+      ref.read(todoViewModelsProvider).setCurrentTodoModel(todoListModel!);
+    }
+    final hoursStart = todoViewModels.startDateTime.hour.toString().padLeft(2,'0');
+    final minutesStart  = todoViewModels.startDateTime.minute.toString().padLeft(2,'0');
+    final hoursEnd = todoViewModels.endDateTime.hour.toString().padLeft(2,'0');
+    final minutesEnd  = todoViewModels.endDateTime.minute.toString().padLeft(2,'0');
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          title: Text("Add New To-Do List",
+          title: const Text("Add New To-Do List",
             style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold
@@ -118,25 +103,23 @@ class _AddTodoListState extends State<AddTodoList> {
             primary: Colors.black,
           ),
           onPressed: () async {
-            final timeLeft = daysBetween(_startDateTime, _endDateTime);
+            final timeLeft = daysBetween(todoViewModels.startDateTime, todoViewModels.endDateTime);
             //print(timeLeft.toString());
 
-            if(_todoTitle.text == "") {
+            if(todoViewModels.todoTitle.text == "") {
               _todoTitleValidator = true;
-              setState((){});
             } else{
               _todoTitleValidator = false;
-              setState((){});
               final newTodoListModel = TodoListModel(
-                title: _todoTitle.text,
-                startDate: _startDateTime,
-                endDate: _endDateTime,
+                title: todoViewModels.todoTitle.text,
+                startDate: todoViewModels.startDateTime,
+                endDate: todoViewModels.endDateTime,
                 timeLeft: timeLeft,
                 status: false,
               );
 
-              todoListModel != null ? todoViewModels.setTodoListItem(newTodoListModel, index!) : todoViewModels.setTodoListModel(newTodoListModel);
-              //todoViewModels.setTodoListModel(newTodoListModel);
+              // todoListModel != null ? todoViewModels.setTodoListItem(newTodoListModel, index!) : todoViewModels.setTodoListModel(newTodoListModel);
+              todoListModel != null ? ref.read(todoViewModelsProvider).setTodoListItem(newTodoListModel, index!) : ref.read(todoViewModelsProvider).setTodoListModel(newTodoListModel);
               Navigator.of(context).pop();
             }
 
@@ -158,58 +141,56 @@ class _AddTodoListState extends State<AddTodoList> {
                   AddTodoListLabel(label: "To-Do Title"),
                   SizedBox(height: 20,),
                   TextFormField(
-                controller: _todoTitle,
-                maxLines: 5,
-                //maxLength: 100,
-                decoration: InputDecoration(
-                  hintText: 'Please key in your To Do title here',
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade300,
-                    fontSize: 14,
+                    controller: ref.watch(todoViewModelsProvider.notifier).todoTitle,
+                    maxLines: 5,
+                    //maxLength: 100,
+                    decoration: InputDecoration(
+                      hintText: 'Please key in your To Do title here',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade300,
+                        fontSize: 14,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide:
+                        BorderSide(color: Colors.grey, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:
+                        BorderSide(color: Colors.blueAccent, width: 2),
+                      ),
+                    ),
+                    // ignore: missing_return
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'Field is required';
+                      }
+                      return null;
+                    },
+                    //onChanged: (value) => ref.read(todoViewModelsProvider).setTodoTitle(value),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide:
-                    BorderSide(color: Colors.grey, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide:
-                    BorderSide(color: Colors.blueAccent, width: 2),
-                  ),
-                ),
-                // ignore: missing_return
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return 'Field is required';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _todoTitle.text = value!;
-                },
-              ),
                   _todoTitleValidator
                       ? Padding(
-                        padding:
-                        const EdgeInsets.only(
-                            top: 5.0),
-                        child: Text(
-                          "Required",
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.red,
-                              fontWeight:
-                              FontWeight.w400),
-                        ),
-                      )
+                    padding:
+                    const EdgeInsets.only(
+                        top: 5.0),
+                    child: Text(
+                      "Required",
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.red,
+                          fontWeight:
+                          FontWeight.w400),
+                    ),
+                  )
                       : SizedBox(),
                   SizedBox(height: 20,),
                   AddTodoListLabel(label: "Start Date"),
                   SizedBox(height: 20,),
                   ElevatedButton(
                     onPressed: () async {
-                      await pickDateTime(0); // 0-start
+                      await pickDateTime(0,todoViewModels,context,ref); // 0-start
                     },
-                    child: Text('${_startDateTime.day}/${_startDateTime.month}/${_startDateTime.year} $hoursStart:$minutesStart',style: TextStyle(color: Colors.white,fontSize: 16),),
+                    child: Text('${todoViewModels.startDateTime.day}/${todoViewModels.startDateTime.month}/${todoViewModels.startDateTime.year} $hoursStart:$minutesStart',style: TextStyle(color: Colors.white,fontSize: 16),),
                     style: ElevatedButton.styleFrom(
                       //backgroundColor: Colors.white,
                       elevation: 2.0,
@@ -222,9 +203,9 @@ class _AddTodoListState extends State<AddTodoList> {
                   SizedBox(height: 20,),
                   ElevatedButton(
                     onPressed: () async {
-                      await pickDateTime(1); // 1-end
+                      await pickDateTime(1,todoViewModels,context,ref); // 1-end
                     },
-                    child: Text('${_endDateTime.day}/${_endDateTime.month}/${_endDateTime.year} $hoursEnd:$minutesEnd',style: TextStyle(color: Colors.white,fontSize: 16),),
+                    child: Text('${todoViewModels.endDateTime.day}/${todoViewModels.endDateTime.month}/${todoViewModels.endDateTime.year} $hoursEnd:$minutesEnd',style: TextStyle(color: Colors.white,fontSize: 16),),
                     style: ElevatedButton.styleFrom(
                       //backgroundColor: Colors.white,
                       elevation: 2.0,
